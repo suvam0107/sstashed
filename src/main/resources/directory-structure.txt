@@ -1,0 +1,78 @@
+artisan-marketplace/                          (Your project root folder)
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── sstashed/
+│   │   │           │
+│   │   │           ├── SstashedApplication.java  ← Already exists (Main class)
+│   │   │           │
+│   │   │           ├── model/                    ← CREATE THIS PACKAGE FIRST
+│   │   │           │   ├── User.java             ← Create entity #1
+│   │   │           │   ├── UserRole.java         ← Enum for User roles
+│   │   │           │   ├── UserAddress.java      ← Create entity #2
+│   │   │           │   ├── AddressType.java      ← Enum for Address types
+│   │   │           │   ├── Category.java         ← Create entity #3
+│   │   │           │   ├── Product.java          ← Create entity #4
+│   │   │           │   ├── ProductStatus.java    ← Enum for Product status
+│   │   │           │   ├── ProductImage.java     ← Create entity #5
+│   │   │           │   ├── Cart.java             ← Create entity #6
+│   │   │           │   ├── CartItem.java         ← Create entity #7
+│   │   │           │   ├── Order.java            ← Create entity #8
+│   │   │           │   ├── OrderStatus.java      ← Enum for Order status
+│   │   │           │   ├── PaymentStatus.java    ← Enum for Payment status
+│   │   │           │   ├── PaymentMethod.java    ← Enum for Payment method
+│   │   │           │   └── OrderItem.java        ← Create entity #9
+│   │   │           │
+│   │   │           ├── repository/               ← CREATE THIS PACKAGE NEXT
+│   │   │           │   ├── UserRepository.java
+│   │   │           │   ├── UserAddressRepository.java
+│   │   │           │   ├── CategoryRepository.java
+│   │   │           │   ├── ProductRepository.java
+│   │   │           │   ├── ProductImageRepository.java
+│   │   │           │   ├── CartRepository.java
+│   │   │           │   ├── CartItemRepository.java
+│   │   │           │   ├── OrderRepository.java
+│   │   │           │   └── OrderItemRepository.java
+│   │   │           │
+│   │   │           ├── service/                  ← CREATE LATER (Phase 3)
+│   │   │           │   ├── UserService.java
+│   │   │           │   ├── AuthService.java
+│   │   │           │   ├── ProductService.java
+│   │   │           │   ├── CartService.java
+│   │   │           │   └── OrderService.java
+│   │   │           │
+│   │   │           ├── controller/               ← CREATE LATER (Phase 4)
+│   │   │           │   ├── AuthController.java
+│   │   │           │   ├── ProductController.java
+│   │   │           │   ├── CartController.java
+│   │   │           │   ├── OrderController.java
+│   │   │           │   └── UserProfileController.java
+│   │   │           │
+│   │   │           ├── dto/                      ← CREATE LATER (Phase 5)
+│   │   │           │   ├── request/
+│   │   │           │   └── response/
+│   │   │           │
+│   │   │           ├── config/                   ← CREATE LATER (Phase 6)
+│   │   │           │   ├── SecurityConfig.java
+│   │   │           │   └── WebConfig.java
+│   │   │           │
+│   │   │           ├── security/                 ← CREATE LATER (Phase 6)
+│   │   │           │   └── (JWT related files)
+│   │   │           │
+│   │   │           └── exception/                ← CREATE LATER (Phase 7)
+│   │   │               └── (Exception handlers)
+│   │   │
+│   │   └── resources/
+│   │       ├── application.properties            ← EDIT THIS NOW
+│   │       ├── static/                           (CSS, JS, Images)
+│   │       └── templates/                        (HTML files - if using Thymeleaf)
+│   │
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── sstashed/
+│
+├── pom.xml                                       ← Already exists (Maven config)
+└── README.md
