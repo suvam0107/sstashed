@@ -1,83 +1,58 @@
 package com.sbsr.sstashed.service;
 
-import com.sbsr.sstashed.dto.AuthResponse;
-import com.sbsr.sstashed.dto.LoginRequest;
-import com.sbsr.sstashed.dto.RegisterRequest;
 import com.sbsr.sstashed.model.User;
-import com.sbsr.sstashed.model.Cart;
+import com.sbsr.sstashed.model.UserRole;
 import com.sbsr.sstashed.repository.UserRepository;
-import com.sbsr.sstashed.repository.CartRepository;
-import com.sbsr.sstashed.security.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sbsr.sstashed.exception.BadRequestException;
+import com.sbsr.sstashed.exception.UnauthorizedException;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
 
-    @Autowired
-    public AuthService(AuthenticationManager authenticationManager,
-                       UserRepository userRepository,
-                       CartRepository cartRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider tokenProvider) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.cartRepository = cartRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenProvider = tokenProvider;
-    }
-
-    public AuthResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
-
-        User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFirstName(), user.getLastName());
-    }
-
-    @Transactional
-    public User register(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new IllegalArgumentException("Email address already in use.");
+    // Register new user
+    public User register(String email, String password, String firstName, String lastName, String phone) {
+        // Check if email already exists
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("Email already exists: " + email);
         }
 
-        User user = new User();
-        user.setFirstName(registerRequest.getFirstName());
-        user.setLastName(registerRequest.getLastName());
-        user.setEmail(registerRequest.getEmail());
-        user.setPhone(registerRequest.getPhone());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRole("CUSTOMER");
-        user.setIsActive(true);
+        // Create new user
+        User user = User.builder()
+                .email(email)
+                .password(passwordEncoder.encode(password))
+                .firstName(firstName)
+                .lastName(lastName)
+                .phone(phone)
+                .role(UserRole.CUSTOMER)
+                .isActive(true)
+                .build();
 
-        User savedUser = userRepository.save(user);
+        return userRepository.save(user);
+    }
 
-        // Create a cart for every new user
-        Cart newCart = new Cart();
-        newCart.setUserId(savedUser.getId());
-        cartRepository.save(newCart);
+    // Authenticate user
+    public User authenticate(String email, String password) {
+        User user = userRepository.findByEmailAndIsActiveTrue(email)
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-        return savedUser;
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new UnauthorizedException("Invalid email or password");
+        }
+
+        return user;
+    }
+
+    // Check if email exists
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
     }
 }
