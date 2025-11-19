@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/profile/**").hasAnyRole("CUSTOMER", "ARTISAN", "ADMIN")
+                        .requestMatchers("/api/wishlist/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         // All other requests need authentication
                         .anyRequest().authenticated()
@@ -62,7 +63,17 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new PasswordEncoder() {
+            @Override
+            public String encode(CharSequence rawPassword) {
+                return rawPassword.toString(); // Just return plain text
+            }
+
+            @Override
+            public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                return rawPassword.toString().equals(encodedPassword); // Simple equals check
+            }
+        };
     }
 
     @Bean
@@ -73,7 +84,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3306",
+                "http://localhost:5173",
+                "http://localhost:8008"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

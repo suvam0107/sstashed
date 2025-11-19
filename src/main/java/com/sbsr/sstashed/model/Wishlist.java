@@ -1,5 +1,6 @@
 package com.sbsr.sstashed.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -7,29 +8,29 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product_images")
+@Table(name = "wishlist", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "product_id"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductImage {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class Wishlist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"password", "addresses", "cart", "orders"})
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties({"artisan", "images", "cartItems"})
     private Product product;
-
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
-
-    @Column(name = "is_primary")
-    private Boolean isPrimary = false;
-
-    @Column(name = "display_order")
-    private Integer displayOrder = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

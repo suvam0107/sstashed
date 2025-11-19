@@ -50,7 +50,7 @@ public class ProductService {
         return products.map(this::convertToDto);
     }
 
-    // Get product by ID
+    // Get product by ID with images
     public Optional<ProductResponse> getProductById(Long id) {
         return productRepository.findById(id).map(this::convertToDto);
     }
