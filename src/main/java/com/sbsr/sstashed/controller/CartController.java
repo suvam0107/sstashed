@@ -3,13 +3,13 @@ package com.sbsr.sstashed.controller;
 import com.sbsr.sstashed.dto.request.AddToCartRequest;
 import com.sbsr.sstashed.dto.request.UpdateCartItemRequest;
 import com.sbsr.sstashed.dto.response.CartResponse;
-import com.sbsr.sstashed.model.Cart;
 import com.sbsr.sstashed.model.CartItem;
 import com.sbsr.sstashed.model.User;
 import com.sbsr.sstashed.repository.UserRepository;
 import com.sbsr.sstashed.service.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -49,10 +49,14 @@ public class CartController {
                     .build();
 
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 
@@ -73,7 +77,7 @@ public class CartController {
             response.put("message", "Item added to cart successfully");
             response.put("cartItem", cartItem);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
@@ -88,9 +92,9 @@ public class CartController {
             Authentication authentication
     ) {
         try {
-            getCurrentUserId(authentication); // Verify user is authenticated
-
-            CartItem cartItem = cartService.updateCartItemQuantity(itemId, request.getQuantity());
+            Long userId = getCurrentUserId(authentication);
+            
+            CartItem cartItem = cartService.updateCartItemQuantity(itemId, request.getQuantity(), userId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Cart item updated successfully");
@@ -110,8 +114,9 @@ public class CartController {
             Authentication authentication
     ) {
         try {
-            getCurrentUserId(authentication); // Verify user is authenticated
-            cartService.removeItemFromCart(itemId);
+            Long userId = getCurrentUserId(authentication);
+            
+            cartService.removeItemFromCart(itemId, userId);
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Item removed from cart successfully");
@@ -151,10 +156,14 @@ public class CartController {
             response.put("count", count);
 
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "An unexpected error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 }

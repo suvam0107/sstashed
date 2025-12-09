@@ -3,6 +3,7 @@ package com.sbsr.sstashed.service;
 import com.sbsr.sstashed.exception.ResourceNotFoundException;
 import com.sbsr.sstashed.exception.BadRequestException;
 import com.sbsr.sstashed.exception.InsufficientStockException;
+import com.sbsr.sstashed.exception.UnauthorizedException;
 import com.sbsr.sstashed.model.*;
 import com.sbsr.sstashed.repository.CartItemRepository;
 import com.sbsr.sstashed.repository.CartRepository;
@@ -26,7 +27,6 @@ public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    // Get or create cart for user
     public Cart getOrCreateCart(Long userId) {
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -41,19 +41,16 @@ public class CartService {
                 });
     }
 
-    // Get cart by user ID
     public Optional<Cart> getCartByUserId(Long userId) {
         return cartRepository.findByUserId(userId);
     }
 
-    // Add item to cart
     public CartItem addItemToCart(Long userId, Long productId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
-        // Check if product is active and in stock
         if (product.getStatus() != ProductStatus.ACTIVE) {
             throw new BadRequestException("Product is not available");
         }
@@ -62,22 +59,20 @@ public class CartService {
             throw new InsufficientStockException(product.getName(), product.getStockQuantity(), quantity);
         }
 
-        // Check if item already exists in cart
         Optional<CartItem> existingItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId);
 
         if (existingItem.isPresent()) {
-            // Update quantity
             CartItem item = existingItem.get();
             int newQuantity = item.getQuantity() + quantity;
 
+            // FIXED: Check new total quantity, not just additional
             if (product.getStockQuantity() < newQuantity) {
-                throw new InsufficientStockException(product.getName(), product.getStockQuantity(), quantity);
+                throw new InsufficientStockException(product.getName(), product.getStockQuantity(), newQuantity);
             }
 
             item.setQuantity(newQuantity);
             return cartItemRepository.save(item);
         } else {
-            // Add new item
             CartItem cartItem = CartItem.builder()
                     .cart(cart)
                     .product(product)
@@ -89,10 +84,13 @@ public class CartService {
         }
     }
 
-    // Update cart item quantity
-    public CartItem updateCartItemQuantity(Long cartItemId, Integer quantity) {
+    public CartItem updateCartItemQuantity(Long cartItemId, Integer quantity, Long userId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", cartItemId));
+
+        if (!cartItem.getCart().getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You don't have permission to modify this cart item");
+        }
 
         Product product = cartItem.getProduct();
 
@@ -101,15 +99,21 @@ public class CartService {
         }
 
         cartItem.setQuantity(quantity);
+        cartItem.setPrice(product.getPrice());
         return cartItemRepository.save(cartItem);
     }
 
-    // Remove item from cart
-    public void removeItemFromCart(Long cartItemId) {
+    public void removeItemFromCart(Long cartItemId, Long userId) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "id", cartItemId));
+
+        if (!cartItem.getCart().getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You don't have permission to remove this cart item");
+        }
+
         cartItemRepository.deleteById(cartItemId);
     }
 
-    // Clear cart
     public void clearCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user", "userId", userId));
@@ -117,7 +121,6 @@ public class CartService {
         cartItemRepository.deleteByCartId(cart.getId());
     }
 
-    // Get all items in cart
     public List<CartItem> getCartItems(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user", "userId", userId));
@@ -125,7 +128,6 @@ public class CartService {
         return cartItemRepository.findByCartId(cart.getId());
     }
 
-    // Calculate cart total
     public BigDecimal calculateCartTotal(Long userId) {
         List<CartItem> items = getCartItems(userId);
 
@@ -134,13 +136,13 @@ public class CartService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Get cart item count
     public Integer getCartItemCount(Long userId) {
         Cart cart = cartRepository.findByUserId(userId).orElse(null);
         if (cart == null) {
             return 0;
         }
 
-        return cartItemRepository.getTotalQuantityByCartId(cart.getId());
+        Integer count = cartItemRepository.getTotalQuantityByCartId(cart.getId());
+        return count != null ? count : 0; // FIXED: Null safety
     }
 }

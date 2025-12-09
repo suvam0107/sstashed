@@ -8,8 +8,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -17,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "artisan", "cartItems"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "artisan"})
 public class Product {
 
     @Id
@@ -28,8 +26,9 @@ public class Product {
     @JoinColumn(name = "artisan_id", nullable = false)
     private User artisan;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({"products", "hibernateLazyInitializer", "handler"})
     private Category category;
 
     @Column(nullable = false, length = 200)
@@ -42,12 +41,14 @@ public class Product {
     private BigDecimal price;
 
     @Column(name = "stock_quantity")
+    @Builder.Default
     private Integer stockQuantity = 0;
 
     @Column(name = "image_url")
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private ProductStatus status = ProductStatus.ACTIVE;
 
     @CreationTimestamp

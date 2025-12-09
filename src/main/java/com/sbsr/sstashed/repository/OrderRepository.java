@@ -17,33 +17,27 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    // Find order by order number
     Optional<Order> findByOrderNumber(String orderNumber);
 
-    // Find all orders by user (paginated) - FIXED
-    Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    @Query("SELECT o FROM Order o WHERE o.user.id = :userId ORDER BY o.createdAt DESC")
+    Page<Order> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
-    // Find orders by user and status - FIXED
-    List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
+    @Query("SELECT o FROM Order o WHERE o.user.id = :userId AND o.status = :status")
+    List<Order> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") OrderStatus status);
 
-    // Find orders by status
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
-    // Find orders by payment status
     List<Order> findByPaymentStatus(PaymentStatus paymentStatus);
 
-    // Find recent orders - FIXED
     @Query("SELECT o FROM Order o WHERE o.user.id = :userId ORDER BY o.orderDate DESC")
     List<Order> findRecentOrdersByUserId(@Param("userId") Long userId, Pageable pageable);
 
-    // Find orders within date range
     @Query("SELECT o FROM Order o WHERE o.orderDate BETWEEN :startDate AND :endDate")
     List<Order> findOrdersByDateRange(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
 
-    // Count orders by user - FIXED
-    Long countByUserId(Long userId);
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.user.id = :userId")
+    Long countByUserId(@Param("userId") Long userId);
 
-    // Count orders by status
     Long countByStatus(OrderStatus status);
 }

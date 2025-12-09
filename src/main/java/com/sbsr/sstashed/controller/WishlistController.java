@@ -5,6 +5,7 @@ import com.sbsr.sstashed.model.Wishlist;
 import com.sbsr.sstashed.repository.UserRepository;
 import com.sbsr.sstashed.service.WishlistService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +29,11 @@ public class WishlistController {
         return user.getId();
     }
 
-    // Get user's wishlist
     @GetMapping
     public ResponseEntity<?> getWishlist(Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
             List<Wishlist> wishlist = wishlistService.getUserWishlist(userId);
-
             return ResponseEntity.ok(wishlist);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -43,7 +42,6 @@ public class WishlistController {
         }
     }
 
-    // Add to wishlist
     @PostMapping("/products/{productId}")
     public ResponseEntity<?> addToWishlist(
             @PathVariable Long productId,
@@ -57,7 +55,8 @@ public class WishlistController {
             response.put("message", "Added to wishlist successfully");
             response.put("wishlist", wishlist);
 
-            return ResponseEntity.ok(response);
+            // FIXED: Return 201 Created instead of 200
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
@@ -65,7 +64,6 @@ public class WishlistController {
         }
     }
 
-    // Remove from wishlist
     @DeleteMapping("/products/{productId}")
     public ResponseEntity<?> removeFromWishlist(
             @PathVariable Long productId,
@@ -77,7 +75,6 @@ public class WishlistController {
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Removed from wishlist successfully");
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -86,7 +83,6 @@ public class WishlistController {
         }
     }
 
-    // Check if product is in wishlist
     @GetMapping("/check/{productId}")
     public ResponseEntity<?> checkWishlist(
             @PathVariable Long productId,
@@ -98,7 +94,6 @@ public class WishlistController {
 
             Map<String, Boolean> response = new HashMap<>();
             response.put("isInWishlist", isInWishlist);
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -107,7 +102,6 @@ public class WishlistController {
         }
     }
 
-    // Get wishlist count
     @GetMapping("/count")
     public ResponseEntity<?> getWishlistCount(Authentication authentication) {
         try {
@@ -116,7 +110,6 @@ public class WishlistController {
 
             Map<String, Long> response = new HashMap<>();
             response.put("count", count);
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -125,7 +118,6 @@ public class WishlistController {
         }
     }
 
-    // Clear wishlist
     @DeleteMapping
     public ResponseEntity<?> clearWishlist(Authentication authentication) {
         try {
@@ -134,7 +126,6 @@ public class WishlistController {
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Wishlist cleared successfully");
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();

@@ -38,10 +38,12 @@ public class User {
     @Column(length = 15)
     private String phone;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.CUSTOMER;
 
+    @Builder.Default
     @Column(name = "is_active")
     private Boolean isActive = true;
 
@@ -54,12 +56,14 @@ public class User {
     private LocalDateTime updatedAt;
 
     // Relationships
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAddress> addresses = new ArrayList<>();
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders = new ArrayList<>();
 }

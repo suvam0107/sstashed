@@ -42,7 +42,7 @@ public class OrderController {
     ) {
         try {
             Long userId = getCurrentUserId(authentication);
-
+            
             Order order = orderService.createOrderFromCart(
                     userId,
                     request.getAddressId(),

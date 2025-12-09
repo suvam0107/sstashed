@@ -25,7 +25,7 @@ public class Order {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false, nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(name = "order_number", unique = true, nullable = false, length = 50)
@@ -34,19 +34,21 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod = PaymentMethod.COD;
 
-    // Shipping Address (denormalized for order history)
     @Column(name = "shipping_address", nullable = false)
     private String shippingAddress;
 
@@ -59,6 +61,7 @@ public class Order {
     @Column(name = "shipping_postal_code", nullable = false, length = 20)
     private String shippingPostalCode;
 
+    @Builder.Default
     @Column(name = "shipping_country", length = 50)
     private String shippingCountry = "India";
 
@@ -76,7 +79,9 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"order"})
     private List<OrderItem> items = new ArrayList<>();
 
     @PrePersist

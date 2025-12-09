@@ -1,5 +1,7 @@
 package com.sbsr.sstashed.service;
 
+import com.sbsr.sstashed.exception.BadRequestException;
+import com.sbsr.sstashed.exception.ResourceNotFoundException;
 import com.sbsr.sstashed.model.Product;
 import com.sbsr.sstashed.model.User;
 import com.sbsr.sstashed.model.Wishlist;
@@ -21,23 +23,23 @@ public class WishlistService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
-    // Get all wishlist items for a user
+    @Transactional(readOnly = true)
     public List<Wishlist> getUserWishlist(Long userId) {
         return wishlistRepository.findByUserId(userId);
     }
 
-    // Add product to wishlist
     public Wishlist addToWishlist(Long userId, Long productId) {
-        // Check if already in wishlist
+        // FIXED: Changed to BadRequestException
         if (wishlistRepository.existsByUserIdAndProductId(userId, productId)) {
-            throw new RuntimeException("Product already in wishlist");
+            throw new BadRequestException("Product already in wishlist");
         }
 
+        // FIXED: Changed to ResourceNotFoundException
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
         Wishlist wishlist = Wishlist.builder()
                 .user(user)
@@ -47,22 +49,24 @@ public class WishlistService {
         return wishlistRepository.save(wishlist);
     }
 
-    // Remove from wishlist
     public void removeFromWishlist(Long userId, Long productId) {
+        // FIXED: Better error message
+        if (!wishlistRepository.existsByUserIdAndProductId(userId, productId)) {
+            throw new ResourceNotFoundException("Wishlist item not found for user " + userId + " and product " + productId);
+        }
         wishlistRepository.deleteByUserIdAndProductId(userId, productId);
     }
 
-    // Check if product is in wishlist
+    @Transactional(readOnly = true)
     public boolean isInWishlist(Long userId, Long productId) {
         return wishlistRepository.existsByUserIdAndProductId(userId, productId);
     }
 
-    // Get wishlist count
+    @Transactional(readOnly = true)
     public Long getWishlistCount(Long userId) {
         return wishlistRepository.countByUserId(userId);
     }
 
-    // Clear wishlist
     public void clearWishlist(Long userId) {
         List<Wishlist> items = wishlistRepository.findByUserId(userId);
         wishlistRepository.deleteAll(items);
